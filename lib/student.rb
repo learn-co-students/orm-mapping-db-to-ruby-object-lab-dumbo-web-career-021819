@@ -2,88 +2,27 @@ class Student
   attr_accessor :id, :name, :grade
 
   def self.new_from_db(row)
-    new_student = Student.new
-    new_student.id = row[0]
-    new_student.name = row[1]
-    new_student.grade = row[2]
-    new_student
+    new = self.new
+    new.id = row[0]
+    new.name = row[1]
+    new.grade = row[2]
+    new
   end
 
   def self.all
-    sql = <<-SQL
-      SELECT *
-      FROM students
-    SQL
-
-    all_students = DB[:conn].execute(sql).map do |row|
-      self.new_from_db(row)
-    end
-
-    all_students
-  end
-
-  def self.all_students_in_grade_9
-    sql = <<-SQL
-      SELECT *
-      FROM students
-      WHERE grade = 9
-    SQL
-
-    DB[:conn].execute(sql).map do |row|
-      self.new_from_db(row)
-    end
-  end
-
-  def self.students_below_12th_grade
-    sql = <<-SQL
-      SELECT *
-      FROM students
-      WHERE grade < 12
-    SQL
-
-    DB[:conn].execute(sql).map {|row| self.new_from_db(row)}
-  end
-
-  def self.first_X_students_in_grade_10(number)
-    sql = <<-SQL
-      SELECT *
-      FROM students
-      WHERE grade = 10
-      LIMIT ?
-    SQL
-
-    DB[:conn].execute(sql, number).map do |row|
-      self.new_from_db(row)
-    end
-  end
-
-  def self.first_student_in_grade_10
-    self.first_X_students_in_grade_10(1)[0]
-  end
-
-  def self.all_students_in_grade_X(grade_year)
-    sql = <<-SQL
-      SELECT *
-      FROM students
-      WHERE grade = ?
-    SQL
-
-    DB[:conn].execute(sql, grade_year).map do |row|
+    DB[:conn].execute("SELECT * FROM students").map do |row|
       self.new_from_db(row)
     end
   end
 
   def self.find_by_name(name)
-    sql = <<-SQL
-      SELECT *
-      FROM students
+    sql =<<-SQL
+      SELECT * FROM students
       WHERE name = ?
-      LIMIT 1
     SQL
 
-    DB[:conn].execute(sql, name).map do |row|
-      self.new_from_db(row)
-    end.first
+    student = DB[:conn].execute(sql, name)[0]
+    self.new_from_db(student)
   end
 
   def save
@@ -112,4 +51,44 @@ class Student
     DB[:conn].execute(sql)
   end
 
+  def self.all_students_in_grade_9
+    sql =<<-SQL
+      SELECT * FROM students
+      WHERE grade = 9
+    SQL
+    DB[:conn].execute(sql)
+  end
+
+  def self.students_below_12th_grade
+    sql=<<-SQL
+      SELECT * FROM students
+      WHERE grade < 12
+    SQL
+    DB[:conn].execute(sql).map do |student|
+      self.new_from_db(student)
+    end
+  end
+
+  def self.first_X_students_in_grade_10(number)
+    sql=<<-SQL
+      SELECT * FROM students
+      WHERE grade = 10
+      LIMIT ?
+    SQL
+
+    DB[:conn].execute(sql, number)
+  end
+
+  def self.first_student_in_grade_10
+    new_from_db(first_X_students_in_grade_10(1)[0])
+  end
+
+  def self.all_students_in_grade_X(grade_year)
+    sql = <<-SQL
+      SELECT * FROM students
+      WHERE grade = ?
+    SQL
+
+    DB[:conn].execute(sql, grade_year)
+  end
 end
